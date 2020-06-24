@@ -40,8 +40,8 @@ Example:
 
 C#                 | DB
 -------------------|-------
-HeatId             | HEAT_ID
-LadleArriveDate    | LADLE_ARRIVE_DATE
+MyColumn           | MY_COLUMN
+MySecondColumn     | MY_SECOND_COLUMN
 
 **Schema Generation**
 ```c#
