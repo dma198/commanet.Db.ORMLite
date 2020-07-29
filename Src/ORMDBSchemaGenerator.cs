@@ -66,12 +66,12 @@ namespace commanet.Db
                     {
                         db.Transaction((th) => th.ExecuteNonQuery(lsql));
                     }
-#pragma warning disable CA1031 // Do not catch general exception types
+                    #pragma warning disable CA1031 // Do not catch general exception types
                     catch (Exception ex)
                     {
                         Logger?.Error(ex, $"DBSchemaGenerator. Operation: {lsql.Trim()} ");
                     }
-#pragma warning restore CA1031 // Do not catch general exception types
+                    #pragma warning restore CA1031 // Do not catch general exception types
                 }
             }
             Logger?.Info("Database Schema check/generation done");
@@ -128,16 +128,25 @@ namespace commanet.Db
                 $"No any DB column definitions found for class {typ.Name}");
             db.Transaction((th) => {
                 th.ExecuteNonQuery(SQL);
-                var atPostCreate = typ.GetCustomAttribute<PostTableCreateScriptAttribute>();
-                if (atPostCreate != null)
+                var types = new List<Type>() { typ };
+                while (typ != typeof(object) && typ.GetTypeInfo().BaseType != typeof(object))
                 {
-                    var sqls = atPostCreate.Script.Split(";");
-                    foreach (var sql in sqls)
+                    types.Insert(0, typ.GetTypeInfo().BaseType ?? typeof(object));
+                    typ = typ.GetTypeInfo().BaseType ?? typeof(object);
+                }
+                foreach (var t in types)
+                {
+                    var atPostCreate = t.GetCustomAttribute<PostTableCreateScriptAttribute>();
+                    if (atPostCreate != null)
                     {
-                        if (!string.IsNullOrEmpty(sql?.Trim()))
+                        var sqls = atPostCreate.Script.Split(";");
+                        foreach (var sql in sqls)
                         {
-                            var lsql = sql.Replace("{TNAME}", tname, StringComparison.InvariantCultureIgnoreCase);
-                            th.ExecuteNonQuery(lsql);
+                            if (!string.IsNullOrEmpty(sql?.Trim()))
+                            {
+                                var lsql = sql.Replace("{TNAME}", tname, StringComparison.InvariantCultureIgnoreCase);
+                                th.ExecuteNonQuery(lsql);
+                            }
                         }
                     }
                 }
